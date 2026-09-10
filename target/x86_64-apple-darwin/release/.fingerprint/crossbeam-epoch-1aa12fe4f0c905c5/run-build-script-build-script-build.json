@@ -1,0 +1,1 @@
+{"rustc":17329007180185699724,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[2543204310390312751,"build_script_build",false,12092475046070228526]],"local":[{"RerunIfChanged":{"output":"x86_64-apple-darwin/release/build/crossbeam-epoch-1aa12fe4f0c905c5/output","paths":["build.rs"]}}],"rustflags":[],"config":0,"compile_kind":0}
