@@ -4,8 +4,6 @@
 
 Modern macOS keeps memory full by design, caching applications so they open instantly. However, rogue background tasks, stalled development servers, and abandoned Electron helper apps can quietly consume gigabytes of RAM. Mac Cleaner gives developers and power users a surgical tool to clean up these specific resource-hogs without rebooting or using bloated third-party cleaner apps.
 
-https://github.com/user-attachments/assets/a908b81e-ae59-469b-9aa3-f24b61ffb5c8
-
 ## ✨ Key Features
 
 *   **Smart Detection:** Automatically filters out active applications, specifically targeting sleeping background processes utilizing less than 1% of your CPU but holding onto significant chunks of RAM.
