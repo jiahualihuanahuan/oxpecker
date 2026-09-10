@@ -1,12 +1,10 @@
 # 🧹 Oxpecker
 
-
-https://github.com/user-attachments/assets/a908b81e-ae59-469b-9aa3-f24b61ffb5c8
-
-
 **Oxpecker** is a lightning-fast, native macOS command-line utility designed to safely reclaim system memory by identifying and terminating stalled, heavy, or unused background processes. Written in Rust, it operates with zero overhead and runs natively on both Intel and Apple Silicon chips. 
 
 Modern macOS keeps memory full by design, caching applications so they open instantly. However, rogue background tasks, stalled development servers, and abandoned Electron helper apps can quietly consume gigabytes of RAM. Mac Cleaner gives developers and power users a surgical tool to clean up these specific resource-hogs without rebooting or using bloated third-party cleaner apps.
+
+https://github.com/user-attachments/assets/a908b81e-ae59-469b-9aa3-f24b61ffb5c8
 
 ## ✨ Key Features
 
