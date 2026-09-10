@@ -50,8 +50,8 @@ oxpecker --mem-threshold-mb 100 --kill
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/mac_cleaner.git
-   cd mac_cleaner
+   git clone https://github.com/jiahualihuanahuan/oxpecker.git
+   cd oxpecker
    ```
 2. Build the optimized release binary:
    ```bash
@@ -59,7 +59,7 @@ oxpecker --mem-threshold-mb 100 --kill
    ```
 3. Run the compiled binary:
    ```bash
-   ./target/release/mac_cleaner --help
+   ./target/release/oxpecker --help
    ```
 
 ## ⚠️ Disclaimer
