@@ -1,7 +1,8 @@
 use clap::Parser;
+use std::thread;
 use sysinfo::{Pid, Process, System};
 
-/// A CLI tool to find and kill unused background processes on macOS
+/// Find and optionally kill high-memory, low-CPU processes owned by the current user (macOS).
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -9,80 +10,102 @@ struct Args {
     #[arg(short, long)]
     kill: bool,
 
-    /// Minimum memory usage in Megabytes to be considered (default: 50)
+    /// Minimum memory usage in MB to consider (default: 50)
     #[arg(short, long, default_value_t = 50.0)]
     mem_threshold_mb: f64,
+
+    /// Maximum CPU usage % to consider a process "idle" (default: 1.0)
+    #[arg(long, default_value_t = 1.0)]
+    max_cpu: f32,
+
+    /// Process names to always skip (comma-separated)
+    #[arg(long, value_delimiter = ',')]
+    exclude: Vec<String>,
 }
 
 fn main() {
     let args = Args::parse();
     let mut sys = System::new_all();
-    
-    // Refresh process lists and memory
-    sys.refresh_all();
 
-    // Safely get the current user ID without unsafe C code
-    let current_uid = sysinfo::get_current_pid()
-        .ok()
+    // CPU usage needs two samples
+    sys.refresh_all();
+    thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
+    sys.refresh_processes();
+
+    let current_pid = sysinfo::get_current_pid().ok();
+    let current_uid = current_pid
         .and_then(|pid| sys.process(pid))
         .and_then(|p| p.user_id().cloned());
 
-    let mut target_processes: Vec<(&Pid, &Process)> = Vec::new();
+    let mut targets: Vec<(&Pid, &Process)> = Vec::new();
 
-    // 1. Identify Target Processes
     for (pid, process) in sys.processes() {
-        let mem_usage_mb = process.memory() as f64 / 1_048_576.0;
+        // Never touch ourselves
+        if Some(*pid) == current_pid {
+            continue;
+        }
 
-        // Safety Filter: Only touch processes owned by the current user
+        // Only our own processes
         if process.user_id() != current_uid.as_ref() {
             continue;
         }
 
-        // Filter: Must exceed memory threshold
-        if mem_usage_mb < args.mem_threshold_mb {
+        let name = process.name().to_string();
+        if args.exclude.iter().any(|e| name.contains(e)) {
             continue;
         }
 
-        // Filter: Look for background/sleeping processes with 0% CPU usage
-        if process.cpu_usage() < 1.0 {
-            target_processes.push((pid, process));
+        let mem_mb = process.memory() as f64 / 1_048_576.0;
+        if mem_mb < args.mem_threshold_mb {
+            continue;
         }
+
+        if process.cpu_usage() > args.max_cpu {
+            continue;
+        }
+
+        targets.push((pid, process));
     }
 
-    // Sort by memory usage (highest first)
-    target_processes.sort_by(|a, b| b.1.memory().cmp(&a.1.memory()));
+    targets.sort_by(|a, b| b.1.memory().cmp(&a.1.memory()));
 
-    if target_processes.is_empty() {
-        println!("No background processes found exceeding {} MB.", args.mem_threshold_mb);
+    if targets.is_empty() {
+        println!(
+            "No matching background processes (mem ≥ {:.0} MB, CPU ≤ {:.1}%).",
+            args.mem_threshold_mb, args.max_cpu
+        );
         return;
     }
 
-    println!("Found {} sleeping background processes:", target_processes.len());
-    println!("{:<8} | {:<25} | {:<10}", "PID", "NAME", "MEMORY (MB)");
-    println!("--------------------------------------------------");
+    println!("Found {} candidate processes:", targets.len());
+    println!("{:<8} | {:<28} | {:>10} | {:>8}", "PID", "NAME", "MEM (MB)", "CPU %");
+    println!("{}", "-".repeat(62));
 
-    // 2. Execute Action (List or Kill)
-    let mut freed_memory = 0.0;
-
-    for (pid, process) in target_processes {
+    let mut freed = 0.0;
+    for (pid, process) in &targets {
         let mem_mb = process.memory() as f64 / 1_048_576.0;
-        println!("{:<8} | {:<25} | {:.2} MB", pid, process.name(), mem_mb);
+        println!(
+            "{:<8} | {:<28} | {:>10.1} | {:>8.1}",
+            pid,
+            process.name(),
+            mem_mb,
+            process.cpu_usage()
+        );
 
         if args.kill {
             if process.kill() {
-                println!("  ↳ Successfully killed PID {}", pid);
-                freed_memory += mem_mb;
+                println!("  ↳ killed");
+                freed += mem_mb;
             } else {
-                eprintln!("  ↳ Failed to kill PID {}", pid);
+                eprintln!("  ↳ failed to kill");
             }
         }
     }
 
+    println!("{}", "-".repeat(62));
     if args.kill {
-        println!("--------------------------------------------------");
-        println!("Total memory freed: {:.2} MB", freed_memory);
+        println!("Approximate memory freed: {:.1} MB", freed);
     } else {
-        println!("--------------------------------------------------");
-        println!("DRY RUN: Run with --kill to terminate these processes.");
+        println!("Dry run. Re-run with --kill to terminate the processes above.");
     }
 }
