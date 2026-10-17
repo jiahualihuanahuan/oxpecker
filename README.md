@@ -15,25 +15,32 @@ macOS keeps a lot of memory cached on purpose. Oxpecker helps you surgically cle
 
 ## Install
 
-### Homebrew (recommended for most users)
+### Homebrew (recommended)
+
+Recent Homebrew requires an explicit trust step for third-party taps:
+
 ```bash
 brew tap jiahualihuanahuan/tap
 brew trust jiahualihuanahuan/tap
 brew install oxpecker
 ```
 
-Or:
+One-liner (after the tap is trusted):
+
 ```bash
 brew install jiahualihuanahuan/tap/oxpecker
 ```
-(after trusting the tap)
+
+The formula builds from source. Homebrew will install Rust automatically if needed.
 
 ### Cargo
+
 ```bash
 cargo install --git https://github.com/jiahualihuanahuan/oxpecker
 ```
 
 ### From source
+
 ```bash
 git clone https://github.com/jiahualihuanahuan/oxpecker.git
 cd oxpecker
@@ -44,23 +51,33 @@ cargo build --release
 ## Usage
 
 List processes using more than 50 MB and ≤ 1% CPU (default):
+
 ```bash
 oxpecker
 ```
 
 Higher memory threshold:
+
 ```bash
 oxpecker --mem-threshold-mb 200
 ```
 
 Actually kill them:
+
 ```bash
 oxpecker --mem-threshold-mb 100 --kill
 ```
 
 Skip specific names:
+
 ```bash
 oxpecker --exclude "Google Chrome,Code"
+```
+
+Adjust the idle CPU threshold:
+
+```bash
+oxpecker --max-cpu 0.5
 ```
 
 ## Disclaimer
