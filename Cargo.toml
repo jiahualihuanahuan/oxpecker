@@ -2,6 +2,11 @@
 name = "oxpecker"
 version = "0.1.0"
 edition = "2024"
+description = "Find and optionally terminate high-memory, low-CPU background processes you own on macOS"
+license = "MIT"
+readme = "README.md"
+keywords = ["macos", "memory", "process", "cli"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 sysinfo = "0.30"
