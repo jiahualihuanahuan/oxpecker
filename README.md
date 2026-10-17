@@ -15,6 +15,19 @@ macOS keeps a lot of memory cached on purpose. Oxpecker helps you surgically cle
 
 ## Install
 
+### Homebrew (recommended for most users)
+```bash
+brew tap jiahualihuanahuan/tap
+brew trust jiahualihuanahuan/tap
+brew install oxpecker
+```
+
+Or:
+```bash
+brew install jiahualihuanahuan/tap/oxpecker
+```
+(after trusting the tap)
+
 ### Cargo
 ```bash
 cargo install --git https://github.com/jiahualihuanahuan/oxpecker
