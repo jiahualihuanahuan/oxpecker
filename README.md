@@ -7,6 +7,7 @@ macOS keeps a lot of memory cached on purpose. Oxpecker helps you surgically cle
 ## Features
 
 - Dry-run by default (never kills unless you pass `--kill`)
+- Confirmation prompt before any kill (skip with `--yes`)
 - Only touches processes owned by your user
 - Accurate idle detection (double-samples CPU)
 - Configurable memory and CPU thresholds
@@ -56,16 +57,35 @@ List processes using more than 50 MB and ≤ 1% CPU (default):
 oxpecker
 ```
 
+Example output:
+
+```
+Found 3 candidate processes (~842.3 MB total):
+PID      | NAME                         |   MEM (MB) |   CPU %
+--------------------------------------------------------------
+12345    | Google Chrome Helper         |      412.1 |    0.0
+23456    | node                         |      280.4 |    0.2
+34567    | Code Helper                  |      149.8 |    0.0
+--------------------------------------------------------------
+Dry run. Re-run with --kill to terminate these processes.
+```
+
 Higher memory threshold:
 
 ```bash
 oxpecker --mem-threshold-mb 200
 ```
 
-Actually kill them:
+Kill with confirmation:
 
 ```bash
 oxpecker --mem-threshold-mb 100 --kill
+```
+
+Kill without prompt (scripting):
+
+```bash
+oxpecker --kill --yes
 ```
 
 Skip specific names:
@@ -86,4 +106,4 @@ Killing processes can lose unsaved data in those apps. Use `--kill` carefully. T
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)
