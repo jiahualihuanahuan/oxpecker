@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::io::{self, Write};
 use std::thread;
 use sysinfo::{Pid, Process, System};
 
@@ -9,6 +10,10 @@ struct Args {
     /// Actually kill the processes (default is dry-run / list only)
     #[arg(short, long)]
     kill: bool,
+
+    /// Skip confirmation prompt when using --kill
+    #[arg(short, long)]
+    yes: bool,
 
     /// Minimum memory usage in MB to consider (default: 50)
     #[arg(short, long, default_value_t = 50.0)]
@@ -21,6 +26,19 @@ struct Args {
     /// Process names to always skip (comma-separated)
     #[arg(long, value_delimiter = ',')]
     exclude: Vec<String>,
+}
+
+fn confirm_kill(count: usize, total_mb: f64) -> bool {
+    print!(
+        "\nAbout to terminate {} process(es) (~{:.1} MB). Continue? [y/N] ",
+        count, total_mb
+    );
+    let _ = io::stdout().flush();
+    let mut input = String::new();
+    if io::stdin().read_line(&mut input).is_err() {
+        return false;
+    }
+    matches!(input.trim().to_lowercase().as_str(), "y" | "yes")
 }
 
 fn main() {
@@ -77,11 +95,15 @@ fn main() {
         return;
     }
 
-    println!("Found {} candidate processes:", targets.len());
+    let total_mb: f64 = targets
+        .iter()
+        .map(|(_, p)| p.memory() as f64 / 1_048_576.0)
+        .sum();
+
+    println!("Found {} candidate processes (~{:.1} MB total):", targets.len(), total_mb);
     println!("{:<8} | {:<28} | {:>10} | {:>8}", "PID", "NAME", "MEM (MB)", "CPU %");
     println!("{}", "-".repeat(62));
 
-    let mut freed = 0.0;
     for (pid, process) in &targets {
         let mem_mb = process.memory() as f64 / 1_048_576.0;
         println!(
@@ -91,21 +113,30 @@ fn main() {
             mem_mb,
             process.cpu_usage()
         );
-
-        if args.kill {
-            if process.kill() {
-                println!("  ↳ killed");
-                freed += mem_mb;
-            } else {
-                eprintln!("  ↳ failed to kill");
-            }
-        }
     }
 
     println!("{}", "-".repeat(62));
-    if args.kill {
-        println!("Approximate memory freed: {:.1} MB", freed);
-    } else {
-        println!("Dry run. Re-run with --kill to terminate the processes above.");
+
+    if !args.kill {
+        println!("Dry run. Re-run with --kill to terminate these processes.");
+        return;
     }
+
+    if !args.yes && !confirm_kill(targets.len(), total_mb) {
+        println!("Aborted.");
+        return;
+    }
+
+    let mut freed = 0.0;
+    for (pid, process) in &targets {
+        let mem_mb = process.memory() as f64 / 1_048_576.0;
+        if process.kill() {
+            println!("Killed PID {} ({}) — {:.1} MB", pid, process.name(), mem_mb);
+            freed += mem_mb;
+        } else {
+            eprintln!("Failed to kill PID {} ({})", pid, process.name());
+        }
+    }
+
+    println!("Approximate memory freed: {:.1} MB", freed);
 }
