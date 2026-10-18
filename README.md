@@ -1,6 +1,6 @@
 # Oxpecker
 
-A fast native macOS CLI that finds high-memory, low-CPU background processes you own and can optionally terminate them. Written in Rust.
+**v0.1.0** — A fast native macOS CLI that finds high-memory, low-CPU background processes you own and can optionally terminate them. Written in Rust.
 
 macOS keeps a lot of memory cached on purpose. Oxpecker helps you surgically clean up stalled helpers, abandoned Electron processes, and other memory hogs without rebooting or installing a full cleaner app.
 
@@ -13,10 +13,13 @@ macOS keeps a lot of memory cached on purpose. Oxpecker helps you surgically cle
 - Configurable memory and CPU thresholds
 - Optional name exclusion list
 - Excludes itself automatically
+- MIT licensed
 
 ## Install
 
 ### Homebrew (recommended)
+
+The formula installs the stable `v0.1.0` release and builds from source.
 
 Recent Homebrew requires an explicit trust step for third-party taps:
 
@@ -32,12 +35,12 @@ One-liner (after the tap is trusted):
 brew install jiahualihuanahuan/tap/oxpecker
 ```
 
-The formula builds from source. Homebrew will install Rust automatically if needed.
+Homebrew will install Rust automatically if needed.
 
 ### Cargo
 
 ```bash
-cargo install --git https://github.com/jiahualihuanahuan/oxpecker
+cargo install --git https://github.com/jiahualihuanahuan/oxpecker --tag v0.1.0
 ```
 
 ### From source
@@ -45,6 +48,7 @@ cargo install --git https://github.com/jiahualihuanahuan/oxpecker
 ```bash
 git clone https://github.com/jiahualihuanahuan/oxpecker.git
 cd oxpecker
+git checkout v0.1.0
 cargo build --release
 ./target/release/oxpecker --help
 ```
