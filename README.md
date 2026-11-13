@@ -1,6 +1,6 @@
 # Oxpecker
 
-**v0.1.2** — A fast native macOS CLI that finds high-memory, low-CPU background processes you own and can optionally terminate them. Written in Rust.
+**v1.0.0** — A fast native macOS CLI that finds high-memory, low-CPU background processes you own and can optionally terminate them. Written in Rust.
 
 macOS keeps a lot of memory cached on purpose. Oxpecker helps you surgically clean up stalled helpers, abandoned Electron processes, and other memory hogs without rebooting or installing a full cleaner app.
 
@@ -8,12 +8,31 @@ macOS keeps a lot of memory cached on purpose. Oxpecker helps you surgically cle
 
 - Dry-run by default (never kills unless you pass `--kill`)
 - Confirmation prompt before any kill (skip with `--yes`)
+- Interactive multi-select mode (`--interactive`)
 - Only touches processes owned by your user
 - Accurate idle detection (double-samples CPU)
 - Configurable memory and CPU thresholds
-- Optional name exclusion list
+- Case-insensitive name exclusion list (plus sensible defaults)
+- Safer killing: SIGTERM first, then SIGKILL after a grace period
+- JSON output for scripting (`--format json`)
+- Sort by memory, CPU, name, or PID
+- Watch mode (`--watch`)
+- Optional command-line display (`--show-cmd`)
+- Colorized output (respects `NO_COLOR` / `--no-color`)
+- System memory context
 - Excludes itself automatically
 - MIT licensed
+
+## What "memory" means
+
+Memory figures are **RSS** (Resident Set Size) — the amount of physical RAM the process currently occupies. This is a practical proxy for “memory hog” on macOS, though shared memory and compressed pages can make the numbers imperfect.
+
+## What it will not touch
+
+- Processes owned by other users
+- Itself
+- Processes above the CPU threshold (so active work is left alone)
+- A small default exclude list (`WindowServer`, `loginwindow`, `Finder`, `Dock`, `SystemUIServer`)
 
 ## Install
 
@@ -38,7 +57,13 @@ brew install jiahualihuanahuan/tap/oxpecker
 ### Cargo
 
 ```bash
-cargo install --git https://github.com/jiahualihuanahuan/oxpecker --tag v0.1.2
+cargo install --git https://github.com/jiahualihuanahuan/oxpecker --tag v1.0.0
+```
+
+Or, once published to crates.io:
+
+```bash
+cargo install oxpecker
 ```
 
 ### From source
@@ -46,7 +71,7 @@ cargo install --git https://github.com/jiahualihuanahuan/oxpecker --tag v0.1.2
 ```bash
 git clone https://github.com/jiahualihuanahuan/oxpecker.git
 cd oxpecker
-git checkout v0.1.2
+git checkout v1.0.0
 cargo build --release
 ./target/release/oxpecker --help
 ```
@@ -63,6 +88,7 @@ Example output:
 
 ```
 Found 3 candidate processes (~842.3 MB total):
+System memory: 12450.2 MB used / 16384.0 MB total (76.0% used)
 PID      | NAME                         |   MEM (MB) |   CPU %
 --------------------------------------------------------------
 12345    | Google Chrome Helper         |      412.1 |    0.0
@@ -84,13 +110,25 @@ Kill with confirmation:
 oxpecker --mem-threshold-mb 100 --kill
 ```
 
+Interactive selection:
+
+```bash
+oxpecker --kill --interactive
+```
+
 Kill without prompt (scripting):
 
 ```bash
 oxpecker --kill --yes
 ```
 
-Skip specific names:
+JSON output:
+
+```bash
+oxpecker --format json
+```
+
+Skip specific names (case-insensitive):
 
 ```bash
 oxpecker --exclude "Google Chrome,Code"
@@ -102,9 +140,43 @@ Adjust the idle CPU threshold:
 oxpecker --max-cpu 0.5
 ```
 
+Show full command lines:
+
+```bash
+oxpecker --show-cmd
+```
+
+Sort by CPU instead of memory:
+
+```bash
+oxpecker --sort cpu
+```
+
+Watch mode (refresh every 5 seconds):
+
+```bash
+oxpecker --watch 5
+```
+
+Custom grace period after SIGTERM:
+
+```bash
+oxpecker --kill --grace-period 5
+```
+
 ## Disclaimer
 
-Killing processes can lose unsaved data in those apps. Use `--kill` carefully. The tool only acts on processes owned by your user.
+Killing processes can lose unsaved data in those apps. Use `--kill` carefully. The tool only acts on processes owned by your user and prefers SIGTERM before SIGKILL.
+
+## Development
+
+```bash
+cargo fmt
+cargo clippy -- -D warnings
+cargo test
+```
+
+CI runs formatting, Clippy, and tests on every push and pull request.
 
 ## License
 
